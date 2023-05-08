@@ -34,12 +34,19 @@ app.post('/', async (req, res) =>{
      });
     const { user, error } = result;
      if (error) {
+      console.log('Estamos en el error de las credenciales');
         const token = jwt.sign("Credenciales no validas", JWT_SECRET);
         res.json({token});
         return;
      } 
-        const token = jwt.sign(result.data.session.user, token1);
-        res.json({token});
+        /*console.log('Pasamos a las cookies');
+        res.cookie('Cookie Name', 'Esta es una cookie', {
+          maxAge: 100000,
+          sameSite: 'lax',
+        });*/
+        console.log(result.data.session.user.aud);
+        const token = jwt.sign(result.data.session.user.aud, token1);
+        res.json(token);
      
     
   });
@@ -48,6 +55,7 @@ app.post('/', async (req, res) =>{
 
 app.post('/login', async (req, res) => {
   try {
+    console.log(req.cookies);
     const token = req.headers.authorization.split(' ')[1];
     //Este es el token que viene del auth
     const decoded = jwt.verify(token, JWT_SECRET);  
