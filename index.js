@@ -5,6 +5,12 @@ const jwt = require('jsonwebtoken');
 const app = express();
 const secretToken = "M+Yidu6bWMk9GKkJopL0Sk+ri/RRcBFTF5DmxvbBZaJj+ouXBWzNeSb0qf+rG0GuLXqeD34vZ0RKH2LnS+0INw==";
 app.use(express.json());
+
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', 'https://academic-os.vercel.app');
+  next();
+});
+
 app.use(cors({
   origin: '*', // Asegúrate de que este origen coincida con el de tu cliente
   credentials: true,
@@ -48,6 +54,28 @@ app.post('/', async (req, res) =>{
      }
   });
 });
+
+app.post('/registro', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.split(' ')[1];
+  const supabase = await connect();
+  
+  jwt.verify(token, secretToken, async (err, decoded) => {
+    if (err) {
+      return res.status(403).json({ message: 'Token inválido' });
+    }
+    const correo = decoded.email;
+    const contrasena = decoded.password;
+    
+    let result = await supabase.auth.signUp({
+        email: correo,
+        password: contrasena
+     });
+     const token = jwt.sign("Registro completado", secretToken);
+      res.json(token);
+     
+  });
+})
 
 app.post('/files/algebra', async (req, res) => {
   const authHeader = req.headers.authorization;
@@ -117,29 +145,6 @@ app.post('/files/programacion', async (req, res) => {
     res.status(500).json({ message: 'Error al listar los archivos' });
   }
 });
-
-app.post('/registro', async (req, res) => {
-  const authHeader = req.headers.authorization;
-  const token = authHeader && authHeader.split(' ')[1];
-  const supabase = await connect();
-  jwt.verify(token, secretToken, async (err, decoded) => {
-    if (err) {
-      return res.status(403).json({ message: 'Token inválido' });
-    }
-    const correo = decoded.email;
-    const contrasena = decoded.password;
-    
-    let result = await supabase.auth.signUp({
-        email: correo,
-        password: contrasena
-     });
-     const token = jwt.sign("Registro completado", secretToken);
-      res.json(token);
-     
-  });
-
-})
-
 
 app.listen(3000, () => {
   console.log('Servidor iniciado en el puerto 3000');
